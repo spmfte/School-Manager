@@ -89,7 +89,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, nil
 		}
-		// Navigating and selections based on active tab
+		// Handle based on active tab
 		switch m.currentTab {
 		case Assignments:
 			switch msg.String() {
@@ -161,8 +161,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "q":
 			return m, tea.Quit
 		}
+	case tea.MouseMsg:
+		// For future implementation: mouse interactions for selections
 	case time.Time:
-		// Update timers and handle other time-based interactions
+		// Update timers
 		for i := range m.timers {
 			if m.timers[i].Remaining > 0 {
 				m.timers[i].Remaining -= time.Second
@@ -173,7 +175,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	// Styling
 	headerStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FFDD55")).Height(3).Align(lipgloss.Center)
 	tabStyle := lipgloss.NewStyle().Padding(1, 2).Foreground(lipgloss.Color("#888888"))
 	activeTabStyle := tabStyle.Copy().Foreground(lipgloss.Color("#FFDD55")).Underline(true)
@@ -190,7 +191,7 @@ func (m model) View() string {
 		tabs = append(tabs, style.Render(name))
 	}
 
-	// Dynamic content rendering based on active tab
+	// Dynamic content rendering
 	var content string
 	switch m.currentTab {
 	case Assignments:
