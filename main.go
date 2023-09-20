@@ -162,7 +162,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	case tea.MouseMsg:
-		// For future implementation: mouse interactions for selections
+		// Handle mouse interactions: Placeholder for future implementation
+		if msg.Type == tea.MouseWheelUp {
+			// Scroll content or navigate up based on active tab
+		} else if msg.Type == tea.MouseWheelDown {
+			// Scroll content or navigate down based on active tab
+		} else if msg.Type == tea.MouseLeft {
+			// Handle selection or other click-based interactions
+		}
 	case time.Time:
 		// Update timers
 		for i := range m.timers {
@@ -243,7 +250,7 @@ func (m model) View() string {
 	layout := headerStyle.Render("English Class Manager") + "\n\n" +
 		strings.Join(tabs, "  ") + "\n\n" +
 		content + "\n\n" +
-		"Footer: Use arrow keys to navigate tabs. Press 'q' to quit."
+		"Footer: Use arrow keys or mouse wheel to navigate tabs. Press 'q' to quit."
 
 	return layout
 }
