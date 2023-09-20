@@ -42,6 +42,7 @@ type model struct {
 	selectedTimer      int
 	showModal          bool
 	modalContent       string
+	inputValue         string
 }
 
 var tabNames = []string{"Assignments", "Reading Materials", "Notes", "Timers"}
@@ -84,11 +85,32 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if m.showModal {
-			if msg.String() == "esc" {
+			switch msg.String() {
+			case "esc":
 				m.showModal = false
+				m.inputValue = ""
+			case "enter":
+				switch m.currentTab {
+				case Assignments:
+					m.assignments = append(m.assignments, m.inputValue)
+				case ReadingMaterials:
+					parts := strings.SplitN(m.inputValue, "-", 2)
+					if len(parts) == 2 {
+						m.readingMaterials = append(m.readingMaterials, ReadingMaterial{Title: strings.TrimSpace(parts[0]), Author: strings.TrimSpace(parts[1]), Read: false})
+					}
+				case Notes:
+					m.notes = append(m.notes, m.inputValue)
+				case Timers:
+					// Placeholder for timer logic
+				}
+				m.showModal = false
+				m.inputValue = ""
+			default:
+				m.inputValue += msg.String()
 			}
 			return m, nil
 		}
+
 		// Handle based on active tab
 		switch m.currentTab {
 		case Assignments:
@@ -103,7 +125,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			case "a":
 				m.showModal = true
-				m.modalContent = "Add new assignment"
+				m.modalContent = "Add new assignment:"
 			}
 		case ReadingMaterials:
 			switch msg.String() {
@@ -117,7 +139,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			case "a":
 				m.showModal = true
-				m.modalContent = "Add new reading material"
+				m.modalContent = "Add new reading material (Format: Title - Author):"
 			}
 		case Notes:
 			switch msg.String() {
@@ -131,7 +153,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			case "a":
 				m.showModal = true
-				m.modalContent = "Add new note"
+				m.modalContent = "Add new note:"
 			}
 		case Timers:
 			switch msg.String() {
@@ -145,7 +167,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			case "a":
 				m.showModal = true
-				m.modalContent = "Set new timer"
+				m.modalContent = "Set new timer (Format: Description - Duration):"
 			}
 		}
 		// Global navigation
@@ -162,14 +184,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	case tea.MouseMsg:
-		// Handle mouse interactions: Placeholder for future implementation
-		if msg.Type == tea.MouseWheelUp {
-			// Scroll content or navigate up based on active tab
-		} else if msg.Type == tea.MouseWheelDown {
-			// Scroll content or navigate down based on active tab
-		} else if msg.Type == tea.MouseLeft {
-			// Handle selection or other click-based interactions
-		}
+		// Placeholder for finalizing mouse interactions
 	case time.Time:
 		// Update timers
 		for i := range m.timers {
@@ -242,7 +257,8 @@ func (m model) View() string {
 	}
 
 	if m.showModal {
-		modal := modalStyle.Render(m.modalContent)
+		modalContent := m.modalContent + "\n" + m.inputValue + "|"
+		modal := modalStyle.Render(modalContent)
 		content += "\n\n" + modal
 	}
 
@@ -250,7 +266,7 @@ func (m model) View() string {
 	layout := headerStyle.Render("English Class Manager") + "\n\n" +
 		strings.Join(tabs, "  ") + "\n\n" +
 		content + "\n\n" +
-		"Footer: Use arrow keys or mouse wheel to navigate tabs. Press 'q' to quit."
+		"Footer: Use arrow keys, mouse wheel, or click to navigate tabs. Press 'q' to quit."
 
 	return layout
 }
