@@ -25,6 +25,11 @@ type ReadingMaterial struct {
 	Read   bool
 }
 
+type Timer struct {
+	Description string
+	Remaining   time.Duration
+}
+
 type model struct {
 	currentTab         Tab
 	assignments        []string
@@ -33,9 +38,10 @@ type model struct {
 	selectedMaterial   int
 	notes              []string
 	selectedNote       int
+	timers             []Timer
+	selectedTimer      int
 	showModal          bool
 	modalContent       string
-	// Incorporate timer and other states as we progress
 }
 
 var tabNames = []string{"Assignments", "Reading Materials", "Notes", "Timers"}
@@ -62,6 +68,10 @@ func initialModel() tea.Model {
 		notes: []string{
 			"Note about Macbeth's main theme.",
 			"Personal thoughts on 1984.",
+		},
+		timers: []Timer{
+			{Description: "Read Macbeth", Remaining: time.Minute * 30},
+			{Description: "Write Essay", Remaining: time.Hour * 2},
 		},
 	}
 }
@@ -123,6 +133,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.showModal = true
 				m.modalContent = "Add new note"
 			}
+		case Timers:
+			switch msg.String() {
+			case "up":
+				if m.selectedTimer > 0 {
+					m.selectedTimer--
+				}
+			case "down":
+				if m.selectedTimer < len(m.timers)-1 {
+					m.selectedTimer++
+				}
+			case "a":
+				m.showModal = true
+				m.modalContent = "Set new timer"
+			}
 		}
 		// Global navigation
 		switch msg.String() {
@@ -138,7 +162,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	case time.Time:
-		// Handle other interactions as needed
+		// Update timers and handle other time-based interactions
+		for i := range m.timers {
+			if m.timers[i].Remaining > 0 {
+				m.timers[i].Remaining -= time.Second
+			}
+		}
 	}
 	return m, nil
 }
@@ -194,7 +223,14 @@ func (m model) View() string {
 			}
 		}
 	case Timers:
-		content = "Your timers will be displayed here."
+		for i, timer := range m.timers {
+			line := fmt.Sprintf("%s - %s remaining", timer.Description, timer.Remaining)
+			if i == m.selectedTimer {
+				content += selectedStyle.Render(line) + "\n"
+			} else {
+				content += line + "\n"
+			}
+		}
 	}
 
 	if m.showModal {
