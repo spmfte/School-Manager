@@ -101,7 +101,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case Notes:
 					m.notes = append(m.notes, m.inputValue)
 				case Timers:
-					// Placeholder for timer logic
+					parts := strings.SplitN(m.inputValue, "-", 2)
+					if len(parts) == 2 {
+						duration, err := time.ParseDuration(strings.TrimSpace(parts[1]))
+						if err == nil {
+							m.timers = append(m.timers, Timer{Description: strings.TrimSpace(parts[0]), Remaining: duration})
+						}
+					}
 				}
 				m.showModal = false
 				m.inputValue = ""
@@ -184,9 +190,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	case tea.MouseMsg:
-		// Placeholder for finalizing mouse interactions
+		if msg.Type == tea.MouseLeft {
+			for i, name := range tabNames {
+				if name == tabNames[m.currentTab] {
+					m.currentTab = Tab(i)
+					return m, nil
+				}
+			}
+		}
 	case time.Time:
-		// Update timers
 		for i := range m.timers {
 			if m.timers[i].Remaining > 0 {
 				m.timers[i].Remaining -= time.Second
