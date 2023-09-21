@@ -31,7 +31,7 @@ type model struct {
 	editorContent      string
 	originalContent    string
 	searchQuery        string
-	searchResults      []string
+	filteredAssignments []string
 }
 
 type ReadingMaterial struct {
@@ -39,8 +39,6 @@ type ReadingMaterial struct {
 	Author string
 	Read   bool
 }
-
-var tabNames = []string{"Assignments", "Reading Materials", "Notes", "Timers", "Editor"}
 
 func main() {
 	p := tea.NewProgram(initialModel(), tea.WithAltScreen())
@@ -80,15 +78,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch m.currentTab {
 		case Assignments:
 			// Handle keyboard navigation for assignments
-			if msg.String() == "ctrl+f" {
-				// Initiate search
-				m.searchQuery = ""
-			} else if msg.String() == "enter" {
-				// Execute search
-				m.searchResults = searchAssignments(m.assignments, m.searchQuery)
-			} else {
-				// Update search query
+			switch msg.String() {
+			case "ctrl+f":
 				m.searchQuery += msg.String()
+				m.filteredAssignments = filterAssignments(m.assignments, m.searchQuery)
+			default:
+				m.searchQuery = ""
+				m.filteredAssignments = m.assignments
 			}
 		case ReadingMaterials:
 			// Handle keyboard navigation for reading materials
@@ -118,10 +114,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func searchAssignments(assignments []string, query string) []string {
+func filterAssignments(assignments []string, query string) []string {
 	var results []string
 	for _, assignment := range assignments {
-		if strings.Contains(strings.ToLower(assignment), strings.ToLower(query)) {
+		if strings.Contains(assignment, query) {
 			results = append(results, assignment)
 		}
 	}
@@ -133,10 +129,10 @@ func (m model) View() string {
 	switch m.currentTab {
 	case Assignments:
 		if m.searchQuery != "" {
-			content = "Search: " + m.searchQuery + "\n\n"
-			content += "Results:\n" + strings.Join(m.searchResults, "\n")
+			content += fmt.Sprintf("Search results for '%s':\n", m.searchQuery)
+			content += strings.Join(m.filteredAssignments, "\n")
 		} else {
-			// Render assignments
+			content += strings.Join(m.assignments, "\n")
 		}
 	case ReadingMaterials:
 		// Render reading materials
@@ -148,8 +144,7 @@ func (m model) View() string {
 		content = m.editorContent + "\n\nOriginal Content:\n" + m.originalContent
 	}
 
-	// Render the common UI parts
-	// ... (tabs, headers, footers)
+	// Render the common UI parts (tabs, headers, footers)
 
 	return content
 }
